@@ -7,7 +7,7 @@ use std::{self, convert::From};
 use anyhow::{Error, Result};
 use thiserror::Error;
 
-pub use remoteprocess::{Pid, Process, ProcessMemory};
+pub use remoteprocess::{Lock, Pid, Process, ProcessMemory};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub(crate) struct Header {
@@ -42,6 +42,8 @@ pub enum MemoryCopyError {
     Io(usize, std::io::Error),
     #[error("Process isn't running")]
     ProcessEnded,
+    #[error("Couldn't lock the process")]
+    ProcessNotLocked,
     #[error("Copy error: {}", _0)]
     Message(String),
     #[error("Too much memory requested when copying: {}", _0)]
