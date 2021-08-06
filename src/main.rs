@@ -168,8 +168,8 @@ fn do_main() -> Result<(), Error> {
             flame_min_width,
             lock_process,
         } => {
-            let pid = match target {
-                Target::Pid { pid } => pid,
+            let (pid, subprocess) = match target {
+                Target::Pid { pid } => (pid, None),
                 Target::Subprocess { prog, args } => {
                     if cfg!(target_os = "macos") {
                         // sleep to prevent freezes (because of High Sierra kernel bug)
@@ -194,20 +194,26 @@ fn do_main() -> Result<(), Error> {
                                 "Dropping permissions: running Ruby command as user {}",
                                 std::env::var("SUDO_USER").context("SUDO_USER")?
                             );
-                            Command::new(prog)
+                            let subprocess = Command::new(prog)
                                 .uid(uid)
                                 .args(args)
                                 .spawn()
-                                .context(context)?
-                                .id() as Pid
+                                .context(context)?;
+
+                            (subprocess.id() as Pid, Some(subprocess))
                         } else {
-                            Command::new(prog).args(args).spawn().context(context)?.id() as Pid
+                            let subprocess =
+                                Command::new(prog).args(args).spawn().context(context)?;
+
+                            (subprocess.id() as Pid, Some(subprocess))
                         }
                     }
                     #[cfg(windows)]
                     {
                         let _ = no_drop_root;
-                        Command::new(prog).args(args).spawn().context(context)?.id() as Pid
+                        let subprocess = Command::new(prog).args(args).spawn().context(context)?;
+
+                        (process.id() as Pid, Some(subprocess))
                     }
                 }
             };
@@ -215,7 +221,7 @@ fn do_main() -> Result<(), Error> {
             #[cfg(all(windows, target_arch = "x86_64"))]
             check_wow64_process(pid);
 
-            parallel_record(
+            let result = parallel_record(
                 format,
                 &raw_path,
                 &out_path,
@@ -226,7 +232,13 @@ fn do_main() -> Result<(), Error> {
                 maybe_duration,
                 flame_min_width,
                 lock_process,
-            )
+            );
+
+            if let Some(mut p) = subprocess {
+                p.wait()?;
+            }
+
+            result
         }
         Report {
             format,
