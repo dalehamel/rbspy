@@ -221,6 +221,36 @@ fn do_main() -> Result<(), Error> {
             #[cfg(all(windows, target_arch = "x86_64"))]
             check_wow64_process(pid);
 
+            let wait_thread;
+            if let Some(mut p) = subprocess {
+                wait_thread = std::thread::spawn(move || {
+                    loop {
+                        match p.try_wait() {
+                            Ok(Some(status)) => {
+                                match status.code() {
+                                    Some(code) => {
+                                        debug!("Got code {}", code);
+                                        break;
+                                    },
+                                    None => {
+                                        debug!("Got nothing");
+                                        continue;
+                                    }
+                                }
+                                //std::thread::sleep(std::time::Duration::from_millis(1000));
+                                //command.kill();
+                                //let _ = nix::sys::signal::kill(nix::unistd::Pid::from_raw(pid), nix::sys::signal::SIGKILL);
+                                //break;
+                            },
+                            Ok(None) => {},
+                            Err(e) => break,
+                        }
+                    }
+                })
+            } else {
+                wait_thread = std::thread::spawn(move || {})
+            }
+
             let result = parallel_record(
                 format,
                 &raw_path,
@@ -234,9 +264,8 @@ fn do_main() -> Result<(), Error> {
                 lock_process,
             );
 
-            if let Some(mut p) = subprocess {
-                p.wait()?;
-            }
+            wait_thread.join();
+
 
             result
         }
