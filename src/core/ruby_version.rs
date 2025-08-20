@@ -296,7 +296,7 @@ macro_rules! ruby_version_v3_3_x(
             get_cfps!();
             get_pos!(rb_iseq_constant_body);
             get_lineno_2_6_0!();
-            get_stack_frame_2_5_0!();
+            get_stack_frame_3_3_0!();
             stack_field_2_5_0!();
             get_thread_status_2_6_0!();
             get_thread_id_3_2_0!();
@@ -307,34 +307,6 @@ macro_rules! ruby_version_v3_3_x(
         }
     )
 );
-
-macro_rules! ruby_version_v3_4_x(
-    ($ruby_version:ident) => (
-        pub mod $ruby_version {
-            use std;
-            use anyhow::{Context, format_err, Result};
-            use bindings::$ruby_version::*;
-            use crate::core::process::ProcessMemory;
-
-            get_stack_trace!(rb_execution_context_struct);
-            get_execution_context_from_vm!();
-            get_ruby_string_3_3_0!();
-            get_ruby_string_array_3_2_0!();
-            get_cfps!();
-            get_pos!(rb_iseq_constant_body);
-            get_lineno_2_6_0!();
-            get_stack_frame_3_4_2!();
-            stack_field_2_5_0!();
-            get_thread_status_2_6_0!();
-            get_thread_id_3_2_0!();
-            get_cfunc_name!();
-
-            #[allow(non_upper_case_globals)]
-            const ruby_fl_type_RUBY_FL_USHIFT: ruby_fl_type = ruby_fl_ushift_RUBY_FL_USHIFT as i32;
-        }
-    )
-);
-
 
 macro_rules! get_execution_context_from_thread(
     ($thread_type:ident) => (
@@ -947,34 +919,14 @@ macro_rules! get_stack_frame_2_5_0(
     )
 );
 
-
-macro_rules! get_stack_frame_3_4_2(
+macro_rules! get_stack_frame_3_3_0(
     () => (
-        fn check_method_entry2<T: ProcessMemory>(
-            raw_imemo: usize,
-            source: &T
-        ) -> Result<*const rb_method_entry_struct> {
-            let imemo: rb_method_entry_struct = source.copy_struct(raw_imemo).context(raw_imemo)?;
-
-            // These type constants are defined in ruby's internal/imemo.h
-            #[allow(non_upper_case_globals)]
-            match ((imemo.flags >> 12) & 0x07) as u32 {
-                imemo_type_imemo_ment => Ok(&imemo as *const rb_method_entry_struct),
-                imemo_type_imemo_svar => {
-                    let svar: vm_svar = source.copy_struct(raw_imemo).context(raw_imemo)?;
-                    check_method_entry2(svar.cref_or_me as usize, source)
-                },
-                _ => Ok(raw_imemo as *const rb_method_entry_struct)
-            }
-        }
-
         fn get_stack_frame<T>(
             iseq_struct: &rb_iseq_struct,
             cfp: &rb_control_frame_t,
             source: &T,
         ) -> Result<StackFrame> where T: ProcessMemory {
             let mut ep = cfp.ep as *mut usize;
-
             let mut env_specval: usize = unsafe {
                 source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?
             };
@@ -984,7 +936,7 @@ macro_rules! get_stack_frame_3_4_2(
 
             // #define VM_ENV_FLAG_LOCAL 0x02
             while env_specval & 0x02 != 0 {
-                if !check_method_entry2(env_me_cref, source)?.is_null() {
+                if !check_method_entry(env_me_cref, source)?.is_null() {
                     break;
                 }
                 unsafe {
@@ -994,12 +946,22 @@ macro_rules! get_stack_frame_3_4_2(
                 }
             }
 
-            let imemo: rb_method_entry_struct = source.copy_struct(env_me_cref).context(env_me_cref)?;
-            let klass: RClass_and_rb_classext_t = source.copy_struct(imemo.defined_class).context(imemo.defined_class)?;
-            let class_name = if klass.classext.classpath != 0 {
-                get_ruby_string(klass.classext.classpath as usize, source)?
-            } else {
-                "".to_string()
+            let class_name = match source.copy_struct(env_me_cref).context(env_me_cref) {
+                Ok(method_struct) => {
+                    let imemo: rb_method_entry_struct = method_struct;
+                    match source.copy_struct(imemo.defined_class).context(imemo.defined_class) {
+                        Ok(rclass) => {
+                            let klass: RClass_and_rb_classext_t = rclass;
+                            if klass.classext.classpath != 0 {
+                                get_ruby_string(klass.classext.classpath as usize, source)?
+                            } else {
+                                "".to_string()
+                            }
+                        },
+                        Err(_) => "".to_string(),
+                    }
+                },
+                Err(_) => "".to_string(),
             };
 
             if iseq_struct.body == std::ptr::null_mut() {
@@ -1038,7 +1000,6 @@ macro_rules! get_stack_frame_3_4_2(
         }
     )
 );
-
 
 macro_rules! get_pos(
     ($iseq_type:ident) => (
@@ -1484,7 +1445,7 @@ ruby_version_v3_3_x!(ruby_3_3_8);
 ruby_version_v3_3_x!(ruby_3_3_9);
 ruby_version_v3_3_x!(ruby_3_4_0);
 ruby_version_v3_3_x!(ruby_3_4_1);
-ruby_version_v3_4_x!(ruby_3_4_2);
+ruby_version_v3_3_x!(ruby_3_4_2);
 ruby_version_v3_3_x!(ruby_3_4_3);
 ruby_version_v3_3_x!(ruby_3_4_4);
 ruby_version_v3_3_x!(ruby_3_4_5);

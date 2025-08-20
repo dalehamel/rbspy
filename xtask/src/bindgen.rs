@@ -205,7 +205,6 @@ fn prepare_ruby_headers(
     writeln!(wrapper, "#define RUBY_JMP_BUF sigjmp_buf")?;
     writeln!(wrapper, "#include \"{}/vm_core.h\"", path.to_string_lossy())?;
     if version >= semver::Version::new(3, 0, 0) {
-        writeln!(wrapper, "#include \"{}/internal/class.h\"", path.to_string_lossy())?;
         writeln!(
             wrapper,
             "#include \"{}/ractor_core.h\"",
@@ -213,6 +212,11 @@ fn prepare_ruby_headers(
         )?;
     }
     if version >= semver::Version::new(3, 3, 0) {
+        writeln!(
+            wrapper,
+            "#include \"{}/internal/class.h\"",
+            path.to_string_lossy()
+        )?;
         writeln!(
             wrapper,
             "#include \"{}/prism/options.h\"",
