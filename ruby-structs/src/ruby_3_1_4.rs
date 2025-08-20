@@ -511,7 +511,6 @@ pub const ruby_method_ids_idLAST_OP_ID: ruby_method_ids = 10;
 pub type ruby_method_ids = ::std::os::raw::c_uint;
 pub type VALUE = usize;
 pub type ID = usize;
-pub type rb_alloc_func_t = ::std::option::Option<unsafe extern "C" fn(klass: VALUE) -> VALUE>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct RBasic {
@@ -2827,39 +2826,6 @@ pub struct rb_ractor_pub {
     pub id: u32,
     pub hooks: rb_hook_list_t,
 }
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct rb_subclass_entry {
-    pub klass: VALUE,
-    pub next: *mut rb_subclass_entry,
-    pub prev: *mut rb_subclass_entry,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct rb_iv_index_tbl_entry {
-    pub index: u32,
-    pub class_serial: rb_serial_t,
-    pub class_value: VALUE,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct rb_classext_struct {
-    pub iv_index_tbl: *mut st_table,
-    pub iv_tbl: *mut st_table,
-    pub m_tbl: *mut rb_id_table,
-    pub const_tbl: *mut rb_id_table,
-    pub callable_m_tbl: *mut rb_id_table,
-    pub cc_tbl: *mut rb_id_table,
-    pub cvc_tbl: *mut rb_id_table,
-    pub subclasses: *mut rb_subclass_entry,
-    pub subclass_entry: *mut rb_subclass_entry,
-    pub module_subclass_entry: *mut rb_subclass_entry,
-    pub origin_: VALUE,
-    pub refined_class: VALUE,
-    pub allocator: rb_alloc_func_t,
-    pub includer: VALUE,
-}
-pub type rb_classext_t = rb_classext_struct;
 pub const rb_ractor_basket_type_basket_type_none: rb_ractor_basket_type = 0;
 pub const rb_ractor_basket_type_basket_type_ref: rb_ractor_basket_type = 1;
 pub const rb_ractor_basket_type_basket_type_copy: rb_ractor_basket_type = 2;
@@ -3487,6 +3453,11 @@ pub struct RVALUE {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct heap_page {
+    pub _address: u8,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct rb_iv_index_tbl_entry {
     pub _address: u8,
 }
 #[repr(C)]
