@@ -204,8 +204,8 @@ fn prepare_ruby_headers(
     let mut wrapper = std::fs::File::create(&wrapper_path)?;
     writeln!(wrapper, "#define RUBY_JMP_BUF sigjmp_buf")?;
     writeln!(wrapper, "#include \"{}/vm_core.h\"", path.to_string_lossy())?;
-    writeln!(wrapper, "#include \"{}/internal/class.h\"", path.to_string_lossy())?;
     if version >= semver::Version::new(3, 0, 0) {
+        writeln!(wrapper, "#include \"{}/internal/class.h\"", path.to_string_lossy())?;
         writeln!(
             wrapper,
             "#include \"{}/ractor_core.h\"",
