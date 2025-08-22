@@ -940,28 +940,24 @@ macro_rules! get_stack_frame_3_3_0(
                     break;
                 }
                 unsafe {
-                    ep = ep.offset(0) as *mut usize;
+                    ep = env_specval.clone() as *mut usize;
                     env_specval = source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?;
                     env_me_cref = source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-2) as usize)?;
                 }
             }
+            let frame_flag: usize = unsafe {
+                source.copy_struct(ep.offset(0) as usize).context(ep.offset(0) as usize)?
+            };
 
-            let class_name = match source.copy_struct(env_me_cref).context(env_me_cref) {
-                Ok(method_struct) => {
-                    let imemo: rb_method_entry_struct = method_struct;
-                    match source.copy_struct(imemo.defined_class).context(imemo.defined_class) {
-                        Ok(rclass) => {
-                            let klass: RClass_and_rb_classext_t = rclass;
-                            if klass.classext.classpath != 0 {
-                                get_ruby_string(klass.classext.classpath as usize, source)?
-                            } else {
-                                "".to_string()
-                            }
-                        },
-                        Err(_) => "".to_string(),
-                    }
-                },
-                Err(_) => "".to_string(),
+            // VM_FRAME_MAGIC_MASK   = 0x7fff0001
+            // VM_FRAME_MAGIC_METHOD = 0x11110001
+            let class_name = if (frame_flag & 0x7fff0001) == 0x11110001 {
+                // if it is a method, we should be able to get the class
+                let imemo: rb_method_entry_struct = source.copy_struct(env_me_cref).context(env_me_cref)?;
+                let klass: RClass_and_rb_classext_t = source.copy_struct(imemo.defined_class).context(imemo.defined_class)?;
+                get_ruby_string(klass.classext.classpath as usize, source)?
+            } else {
+                "".to_string()
             };
 
             if iseq_struct.body == std::ptr::null_mut() {
