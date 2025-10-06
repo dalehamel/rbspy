@@ -50,7 +50,7 @@ jobs:
       - name: Create core dump
         shell: sudo bash {0}
         run: |
-          gcore ${{ steps.ruby-script.outputs.pid }}
+          gcore -a ${{ steps.ruby-script.outputs.pid }}
           mv core.${{ steps.ruby-script.outputs.pid }} ruby-coredump-${{ inputs.ruby-version }}
           gzip -9 ruby-coredump-${{ inputs.ruby-version }}
 
