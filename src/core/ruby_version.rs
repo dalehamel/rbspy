@@ -1933,41 +1933,49 @@ mod tests {
             },
             StackFrame {
                 name: "Object#aaa".to_string(),
-                relative_path: "ci/ruby-programs/infinite.rb".to_string(),
+                relative_path: "ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 absolute_path: Some(
-                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite.rb".to_string(),
+                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 ),
-                lineno: Some(3),
+                lineno: Some(9),
             },
             StackFrame {
                 name: "Object#bbb".to_string(),
-                relative_path: "ci/ruby-programs/infinite.rb".to_string(),
+                relative_path: "ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 absolute_path: Some(
-                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite.rb".to_string(),
+                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 ),
-                lineno: Some(7),
+                lineno: Some(13),
             },
             StackFrame {
                 name: "Object#ccc".to_string(),
-                relative_path: "ci/ruby-programs/infinite.rb".to_string(),
+                relative_path: "ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 absolute_path: Some(
-                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite.rb".to_string(),
+                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 ),
-                lineno: Some(11),
+                lineno: Some(17),
             },
             StackFrame {
                 name: "block in <main>".to_string(),
-                relative_path: "ci/ruby-programs/infinite.rb".to_string(),
+                relative_path: "ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 absolute_path: Some(
-                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite.rb".to_string(),
+                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite_on_cpu.rb".to_string(),
                 ),
-                lineno: Some(15),
+                lineno: Some(21),
             },
             StackFrame {
                 name: "Kernel#loop".to_string(),
                 relative_path: "<internal:kernel>".to_string(),
                 absolute_path: Some("unknown".to_string()),
                 lineno: Some(192),
+            },
+            StackFrame {
+                name: "<main>".to_string(),
+                relative_path: "ci/ruby-programs/infinite_on_cpu.rb".to_string(),
+                absolute_path: Some(
+                    "/home/runner/work/rbspy/rbspy/ci/ruby-programs/infinite_on_cpu.rb".to_string(),
+                ),
+                lineno: Some(19),
             },
         ]
     }
@@ -2795,8 +2803,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_0() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_0::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2835,8 +2843,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_1() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_1::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2854,8 +2862,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_2() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_2::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2873,8 +2881,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_3() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_3::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2891,8 +2899,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_4() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_4::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2909,8 +2917,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_5() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_5::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2927,8 +2935,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_6() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_6::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2945,8 +2953,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_7() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_7::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2963,8 +2971,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_3_8() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_3_8::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2981,8 +2989,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_0() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_0::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -2999,8 +3007,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_1() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_1::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -3017,8 +3025,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_2() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_2::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -3035,8 +3043,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_3() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_3::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -3053,8 +3061,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_4() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_4::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -3071,8 +3079,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_5() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_5::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
@@ -3089,8 +3097,8 @@ mod tests {
     #[test]
     fn test_get_ruby_stack_trace_3_4_6() {
         let source = coredump_3_3_0();
-        let vm_addr = 0x7f7ff21f1868;
-        let global_symbols_addr = Some(0x7f7ff21e0c60);
+        let vm_addr = 0x7f43435f4988;
+        let global_symbols_addr = Some(0x7f43435e3c60);
         let stack_trace = ruby_version::ruby_3_4_6::get_stack_trace::<CoreDump>(
             0,
             vm_addr,
