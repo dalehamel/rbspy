@@ -1006,6 +1006,8 @@ macro_rules! get_stack_frame_2_5_0(
 macro_rules! get_stack_frame_3_3_0(
 
     () => (
+
+
         fn get_classname<T>(
             ep: &*const usize,
             source: &T,
@@ -1025,43 +1027,11 @@ macro_rules! get_stack_frame_3_3_0(
             // https://github.com/ruby/ruby/blob/1d1529629ce1550fad19c2d9410c4bf4995230d2/include/ruby/internal/fl_type.h#L394¬
             const RUBY_FL_SINGLETON: usize = RUBY_FL_USER1;
 
-            let mut ep = ep.clone() as *mut usize;
+            //let mut ep = ep.clone() as *mut usize;
             let mut singleton = false;
-
-            //let frame_flag: usize = unsafe {
-            //    source.copy_struct(ep.offset(0) as usize).context(ep.offset(0) as usize)?
-            //};
-
-
-            // TODO verify if this is needed, i don't think it is
-            //// VM_FRAME_MAGIC_MASK   = 0x7fff0001
-            //// VM_FRAME_MAGIC_METHOD = 0x11110001
-            //if (frame_flag & 0x7fff0001) != 0x11110001 {
-            //    return Err(anyhow::anyhow!(format!("frame flag {:x} does not match method mask, cannot read class", frame_flag)));
-            //}
-
-            let mut env_specval: usize = unsafe {
-                source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?
-            };
-            let mut env_me_cref: usize = unsafe {
-                source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-1) as usize)?
-            };
-
-            // #define VM_ENV_FLAG_LOCAL 0x02
-            while env_specval & 0x02 != 0 {
-                if !check_method_entry(env_me_cref, source)?.is_null() {
-                    break;
-                }
-                unsafe {
-                    // https://github.com/ruby/ruby/blob/v3_4_5/vm_core.h#L1355
-                    ep = (env_specval.clone() & !0x03) as *mut usize; // FIXME need to mask this properly
-                    env_specval = source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?;
-                    env_me_cref = source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-2) as usize)?;
-                }
-            }
-
             let mut classpath_ptr = 0usize;
 
+            let env_me_cref = locate_method_entry(&ep, source)?;
             let imemo: rb_method_entry_struct = source.copy_struct(env_me_cref).context(env_me_cref)?;
             // Read the class structure to get flags
             let class_addr = imemo.defined_class;
@@ -1086,7 +1056,6 @@ macro_rules! get_stack_frame_3_3_0(
 
                         // For singleton classes, get the classpath from the attached object
                         let singleton_object_addr: usize = unsafe {
-                            source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-1) as usize)?;
                             klass.classext.as_.singleton_class.attached_object as usize
                         };
 
@@ -1178,19 +1147,6 @@ macro_rules! get_stack_frame_3_3_0(
                     },
                 }
             })
-        }
-
-        fn qualified_method_name(class_path: &str, method_name: &str, singleton: bool) -> String {
-            if method_name.is_empty() {
-                return method_name.to_string();
-            }
-
-            if !class_path.is_empty() {
-                let join_char = if singleton { "." } else { "#" };
-                return format!("{}{}{}", class_path, join_char, method_name);
-            }
-
-            method_name.to_string()
         }
 
         // TODO make some tests for profile_full_label_name to cover the various cases it needs
@@ -1428,15 +1384,61 @@ macro_rules! get_cfunc_name_unsupported(
 
 macro_rules! get_cfunc_name(
     () => (
+        fn qualified_method_name(class_path: &str, method_name: &str, singleton: bool) -> String {
+            if method_name.is_empty() {
+                return method_name.to_string();
+            }
+
+            if !class_path.is_empty() {
+                let join_char = if singleton { "." } else { "#" };
+                return format!("{}{}{}", class_path, join_char, method_name);
+            }
+
+            method_name.to_string()
+        }
+
+        fn locate_method_entry<T>(
+            ep: &*const usize,
+            source: &T,
+        ) -> Result<usize> where T: ProcessMemory {
+            const VM_ENV_FLAG_LOCAL: usize = 0x2;
+            let mut ep = ep.clone() as *mut usize;
+            //let env_me_cref: usize = 0;
+            let mut env_specval: usize = unsafe {
+                source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?
+            };
+            let mut env_me_cref: usize = unsafe {
+                source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-1) as usize)?
+            };
+
+
+            while env_specval & VM_ENV_FLAG_LOCAL != 0 {
+                if !check_method_entry(env_me_cref, source)?.is_null() {
+                    break;
+                }
+                unsafe {
+                    // https://github.com/ruby/ruby/blob/v3_4_5/vm_core.h#L1356
+                    // we must strip off the GC marking bits from the EP, and mimic
+                    // https://github.com/ruby/ruby/blob/v3_4_5/vm_core.h#L1501
+                    ep = (env_specval.clone() & !0x03) as *mut usize;
+                    env_specval = source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?;
+                    env_me_cref = source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-2) as usize)?;
+                }
+            }
+
+            Ok(env_me_cref)
+        }
         fn check_method_entry<T: ProcessMemory>(
             raw_imemo: usize,
             source: &T
         ) -> Result<*const rb_method_entry_struct> {
+            //https://github.com/ruby/ruby/blob/v3_4_5/internal/imemo.h#L21
+            const IMEMO_MASK: usize = 0x0f;
             let imemo: rb_method_entry_struct = source.copy_struct(raw_imemo).context(raw_imemo)?;
 
             // These type constants are defined in ruby's internal/imemo.h
             #[allow(non_upper_case_globals)]
-            match ((imemo.flags >> 12) & 0x07) as u32 {
+            match ((imemo.flags >> ruby_fl_type_RUBY_FL_USHIFT) & IMEMO_MASK) as u32 {
                 imemo_type_imemo_ment => Ok(&imemo as *const rb_method_entry_struct),
                 imemo_type_imemo_svar => {
                     let svar: vm_svar = source.copy_struct(raw_imemo).context(raw_imemo)?;
@@ -1454,12 +1456,12 @@ macro_rules! get_cfunc_name(
             source: &T,
             _pid: Pid
         ) -> Result<String> {
+            const IMEMO_MASK: usize = 0x0f;
+
             // The logic in this function is adapted from the .gdbinit script in
             // github.com/ruby/ruby, in particular the print_id function.
-
-            let mut ep = cfp.ep as *mut usize;
             let frame_flag: usize = unsafe {
-                source.copy_struct(ep.offset(0) as usize).context(ep.offset(0) as usize)?
+                source.copy_struct(cfp.ep.offset(0) as usize).context(cfp.ep.offset(0) as usize)?
             };
 
             // if VM_FRAME_TYPE($cfp->flag) != VM_FRAME_MAGIC_CFUNC
@@ -1467,41 +1469,21 @@ macro_rules! get_cfunc_name(
                 return Err(format_err!("Not a C function control frame").into());
             }
 
-            let mut env_specval: usize = unsafe {
-                source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?
-            };
-            let mut env_me_cref: usize = unsafe {
-                source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-1) as usize)?
-            };
-
-            // FIXME this environment traversal is completely broken
-            // i think it only works because cfunc is usually local already...
-            // #define VM_ENV_FLAG_LOCAL 0x02
-            while env_specval & 0x02 != 0 {
-                if !check_method_entry(env_me_cref, source)?.is_null() {
-                    break;
-                }
-                unsafe {
-                    ep = ep.offset(0) as *mut usize; // FIXME it never updates the PC, needs to get specval and mask it
-                    env_specval = source.copy_struct(ep.offset(-1) as usize).context(ep.offset(-1) as usize)?;
-                    env_me_cref = source.copy_struct(ep.offset(-2) as usize).context(ep.offset(-2) as usize)?;
-                }
-            }
-
+            let env_me_cref = locate_method_entry(&cfp.ep, source)?;
             let imemo: rb_method_entry_struct = source.copy_struct(env_me_cref).context(env_me_cref)?;
             if imemo.def.is_null() {
                 return Err(format_err!("No method definition").into());
             }
 
-            // FIXME read the classpath here from:
-            //rb_method_entry_struct.owner
 
             // FIXME - i'm pretty sure this mask is wrong, it should be 0xff
-            let ttype = ((imemo.flags >> 12) & 0x07) as usize;
+            let ttype = ((imemo.flags >> ruby_fl_type_RUBY_FL_USHIFT) & IMEMO_MASK) as usize;
             if ttype != imemo_type_imemo_ment as usize {
                 return Err(format_err!("Not a method entry").into());
             }
+            // TODO check the memo entry is of the CFUNC type now
 
+            let owner: rb_method_entry_struct = source.copy_struct(imemo.owner).context(imemo.owner)?;
             #[allow(non_camel_case_types)]
             type rb_id_serial_t = u32;
 
