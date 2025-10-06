@@ -1031,6 +1031,42 @@ macro_rules! get_classpath(
             let class_path = get_ruby_string(classpath_ptr as usize, source)?;
             Ok((class_path.to_string(), singleton))
         }
+
+        // TODO make some tests for profile_full_label_name to cover the various cases it needs
+        // to handle correctly
+        // TODO this should be saved in the cache, we shouldn't unconditionally run this
+        fn profile_frame_full_label(
+            class_path: &str,
+            label: &str,
+            base_label: &str,
+            method_name: &str,
+            singleton: bool,
+        ) -> String {
+            let qualified = qualified_method_name(class_path, method_name, singleton);
+
+            if qualified.is_empty() || qualified == base_label {
+                return label.to_string();
+            }
+
+            let label_length = label.len();
+            let base_label_length = base_label.len();
+            let mut prefix_len = label_length.saturating_sub(base_label_length);
+
+            // Ensure prefix_len doesn't exceed label length (defensive programming)
+            // Note: saturating_sub above already handles the < 0 case
+            if prefix_len > label_length {
+                prefix_len = label_length;
+            }
+
+            let profile_label = format!("{}{}", &label[..prefix_len], qualified);
+
+            if profile_label.is_empty() {
+                return String::new();
+            }
+
+            // Get the prefix from label and concatenate with qualified_method_name
+            profile_label
+        }
     )
 );
 
@@ -1087,42 +1123,6 @@ macro_rules! get_stack_frame_3_3_0(
                     },
                 }
             })
-        }
-
-        // TODO make some tests for profile_full_label_name to cover the various cases it needs
-        // to handle correctly
-        // TODO this should be saved in the cache, we shouldn't unconditionally run this
-        fn profile_frame_full_label(
-            class_path: &str,
-            label: &str,
-            base_label: &str,
-            method_name: &str,
-            singleton: bool,
-        ) -> String {
-            let qualified = qualified_method_name(class_path, method_name, singleton);
-
-            if qualified.is_empty() || qualified == base_label {
-                return label.to_string();
-            }
-
-            let label_length = label.len();
-            let base_label_length = base_label.len();
-            let mut prefix_len = label_length.saturating_sub(base_label_length);
-
-            // Ensure prefix_len doesn't exceed label length (defensive programming)
-            // Note: saturating_sub above already handles the < 0 case
-            if prefix_len > label_length {
-                prefix_len = label_length;
-            }
-
-            let profile_label = format!("{}{}", &label[..prefix_len], qualified);
-
-            if profile_label.is_empty() {
-                return String::new();
-            }
-
-            // Get the prefix from label and concatenate with qualified_method_name
-            profile_label
         }
     )
 );
