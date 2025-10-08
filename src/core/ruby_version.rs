@@ -977,7 +977,6 @@ macro_rules! get_classpath(
             const RUBY_T_MASK: usize = 0x1f;
 
             let ext: RClass_and_rb_classext_t = source.copy_struct(klass).context(klass)?;
-            //println!("KLASS {:X} REAL_KLASS {:X} {:?}", klass, real_klass, ext.classext.permanent_classpath());
             let mut path_addr = if ext.classext.classpath == 0 {
                 0x0f // Qnil
             } else {
@@ -1011,10 +1010,10 @@ macro_rules! get_classpath(
         ) -> Result<String> where T: ProcessMemory {
 
             let ext: RClass_and_rb_classext_t = source.copy_struct(klass).context(klass)?;
-            //println!("KLASS {:X} REAL_KLASS {:X} {:?}", klass, real_klass, ext.classext.permanent_classpath());
             if ext.classext.classpath != 0 {
                 return get_ruby_string(ext.classext.classpath as usize, source);
             };
+
             let path = rb_tmp_class_path(klass, source)?;
             let path_fallback = match path {
                 // Qnil
@@ -1031,7 +1030,6 @@ macro_rules! get_classpath(
                 }
             };
 
-            //println!("PATH {}", path_fallback);
             return Ok(path_fallback)
         }
 
